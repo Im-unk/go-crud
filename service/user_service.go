@@ -7,11 +7,11 @@ import (
 
 // UserService handles the user-related operations
 type UserService struct {
-	userRepository repository.UserRepository
+	userRepository *repository.UserRepository
 }
 
 // NewUserService creates a new UserService
-func NewUserService(userRepository repository.UserRepository) *UserService {
+func NewUserService(userRepository *repository.UserRepository) *UserService {
 	return &UserService{
 		userRepository: userRepository,
 	}

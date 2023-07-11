@@ -1,17 +1,17 @@
 package repository
 
 import (
-	"main.go/database"
+	database "main.go/database/models"
 	"main.go/model"
 )
 
 // UserRepository handles the user data access
 type UserRepository struct {
-	db database.Database
+	db database.UserDatabase
 }
 
 // NewUserRepository creates a new UserRepository
-func NewUserRepository(db database.Database) *UserRepository {
+func NewUserRepository(db database.UserDatabase) *UserRepository {
 	return &UserRepository{
 		db: db,
 	}
@@ -19,30 +19,30 @@ func NewUserRepository(db database.Database) *UserRepository {
 
 // GetUsers returns all users
 func (r *UserRepository) GetUsers() ([]model.User, error) {
-	// Implement your code to fetch users from the database
+	return r.db.GetUsers()
 }
 
 // GetUserByID returns a user by ID
 func (r *UserRepository) GetUserByID(id int) (model.User, error) {
-	// Implement your code to fetch a user by ID from the database
+	return r.db.GetUserByID(id)
 }
 
 // AddUser adds a new user
 func (r *UserRepository) AddUser(user model.User) (model.User, error) {
-	// Implement your code to add a user to the database
+	return r.db.AddUser(user)
 }
 
 // UpdateUser updates a user
 func (r *UserRepository) UpdateUser(user model.User) (model.User, error) {
-	// Implement your code to update a user in the database
+	return r.db.UpdateUser(user)
 }
 
 // PatchUser partially updates a user
 func (r *UserRepository) PatchUser(user model.User) (model.User, error) {
-	// Implement your code to partially update a user in the database
+	return r.db.PatchUser(user)
 }
 
 // DeleteUser deletes a user by ID
 func (r *UserRepository) DeleteUser(id int) error {
-	// Implement your code to delete a user by ID from the database
+	return r.db.DeleteUser(id)
 }

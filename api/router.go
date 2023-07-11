@@ -16,11 +16,11 @@ type Router struct {
 }
 
 // NewRouter creates a new API router
-func NewRouter(postService service.PostService, userService service.UserService) *Router {
+func NewRouter(postService *service.PostService, userService *service.UserService) *Router {
 	router := mux.NewRouter()
 
-	postHandler := api.NewPostHandler(postService)
-	userHandler := api.NewUserHandler(userService)
+	postHandler := api.NewPostHandler(*postService)
+	userHandler := api.NewUserHandler(*userService)
 
 	// Register API endpoints
 	router.HandleFunc("/posts", postHandler.GetPosts).Methods("GET")

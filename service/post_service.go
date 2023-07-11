@@ -5,13 +5,13 @@ import (
 	"main.go/repository"
 )
 
-// PostService handles the post-related operations
+// PostService handles the business logic for posts
 type PostService struct {
-	postRepository repository.PostRepository
+	postRepository *repository.PostRepository
 }
 
 // NewPostService creates a new PostService
-func NewPostService(postRepository repository.PostRepository) *PostService {
+func NewPostService(postRepository *repository.PostRepository) *PostService {
 	return &PostService{
 		postRepository: postRepository,
 	}

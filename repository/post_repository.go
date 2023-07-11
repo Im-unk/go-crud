@@ -1,17 +1,17 @@
 package repository
 
 import (
-	"main.go/database"
+	database "main.go/database/models"
 	"main.go/model"
 )
 
 // PostRepository handles the post data access
 type PostRepository struct {
-	db database.Database
+	db database.PostDatabase
 }
 
 // NewPostRepository creates a new PostRepository
-func NewPostRepository(db database.Database) *PostRepository {
+func NewPostRepository(db database.PostDatabase) *PostRepository {
 	return &PostRepository{
 		db: db,
 	}
