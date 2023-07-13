@@ -1,5 +1,3 @@
-// main.go
-
 package main
 
 import (
@@ -11,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"main.go/api"
 	"main.go/database/implementations/mongodb"
+	"main.go/messaging"
 	"main.go/repository"
 	"main.go/service"
 )
@@ -28,12 +27,22 @@ func main() {
 	// Create the UserRepository using the MongoDB database instance
 	userRepository := repository.NewUserRepository(mongodb.NewUserMongoDB(mongoDB))
 
+	// Create the NATS messaging system
+	natsURL := "nats://localhost:4222" // Default URL
+	natsMessaging, err := messaging.NewNatsMessaging(natsURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create the MessagingService
+	messagingService := service.NewMessagingService(natsMessaging)
+
 	// Create the services
-	postService := service.NewPostService(postRepository)
-	userService := service.NewUserService(userRepository)
+	postService := service.NewPostService(postRepository, messagingService) // Pass the messagingService
+	userService := service.NewUserService(userRepository, messagingService) // Pass the messagingService
 
 	// Create the API router
-	router := api.NewRouter(postService, userService)
+	router := api.NewRouter(postService, userService, messagingService) // Pass the messagingService
 
 	// Start the server
 	log.Fatal(http.ListenAndServe(":8080", router))

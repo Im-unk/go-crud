@@ -13,12 +13,14 @@ import (
 // PostHandler handles HTTP requests for posts
 type PostHandler struct {
 	postService service.PostService
+	messaging   *service.MessagingService // Add the messaging service as a field
 }
 
 // NewPostHandler creates a new PostHandler
-func NewPostHandler(postService service.PostService) *PostHandler {
+func NewPostHandler(postService service.PostService, messaging *service.MessagingService) *PostHandler {
 	return &PostHandler{
 		postService: postService,
+		messaging:   messaging,
 	}
 }
 

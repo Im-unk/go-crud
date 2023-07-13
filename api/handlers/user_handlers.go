@@ -9,15 +9,17 @@ import (
 	"main.go/service"
 )
 
-// PostHandler handles HTTP requests for posts
+// UserHandler handles HTTP requests for users
 type UserHandler struct {
 	userService service.UserService
+	messaging   *service.MessagingService // Add the messaging service as a field
 }
 
 // NewUserHandler creates a new UserHandler
-func NewUserHandler(userService service.UserService) *UserHandler {
+func NewUserHandler(userService service.UserService, messaging *service.MessagingService) *UserHandler {
 	return &UserHandler{
 		userService: userService,
+		messaging:   messaging,
 	}
 }
 

@@ -8,12 +8,14 @@ import (
 // PostService handles the business logic for posts
 type PostService struct {
 	postRepository *repository.PostRepository
+	messaging      *MessagingService // Add the messaging service as a field
 }
 
 // NewPostService creates a new PostService
-func NewPostService(postRepository *repository.PostRepository) *PostService {
+func NewPostService(postRepository *repository.PostRepository, messaging *MessagingService) *PostService {
 	return &PostService{
 		postRepository: postRepository,
+		messaging:      messaging,
 	}
 }
 

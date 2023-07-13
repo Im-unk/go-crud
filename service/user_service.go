@@ -8,12 +8,14 @@ import (
 // UserService handles the user-related operations
 type UserService struct {
 	userRepository *repository.UserRepository
+	messaging      *MessagingService // Add the messaging service as a field
 }
 
 // NewUserService creates a new UserService
-func NewUserService(userRepository *repository.UserRepository) *UserService {
+func NewUserService(userRepository *repository.UserRepository, messaging *MessagingService) *UserService {
 	return &UserService{
 		userRepository: userRepository,
+		messaging:      messaging,
 	}
 }
 
