@@ -85,13 +85,12 @@ func (h *PostHandler) UpdatePost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	updatedPost.ID = id
-	post, err := h.postService.UpdatePost(updatedPost)
+	//updatedPost.ID = id
+	post, err := h.postService.UpdatePost(id, updatedPost) // Pass the ID as a separate parameter
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	writeResponse(w, post)
 }
 
@@ -111,8 +110,8 @@ func (h *PostHandler) PatchPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	patchedPost.ID = id
-	post, err := h.postService.PatchPost(patchedPost)
+	//patchedPost.ID = id
+	post, err := h.postService.PatchPost(id, patchedPost) // Pass the ID as a separate parameter
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

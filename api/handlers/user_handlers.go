@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"main.go/model"
@@ -54,13 +53,8 @@ func (h *UserHandler) AddUser(w http.ResponseWriter, req *http.Request) {
 // GetUser handles the GET /users/{id} endpoint
 func (h *UserHandler) GetUser(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID could not be converted to integer", http.StatusBadRequest)
-		return
-	}
 
-	user, err := h.userService.GetUserByID(id)
+	user, err := h.userService.GetUserByID(idParam)
 	if err != nil {
 		http.Error(w, "No data found with specified ID", http.StatusNotFound)
 		return
@@ -72,21 +66,17 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, req *http.Request) {
 // UpdateUser handles the PUT /users/{id} endpoint
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID could not be converted to integer", http.StatusBadRequest)
-		return
-	}
+	// id, err := strconv.Atoi(idParam) // Remove this line
 
 	var updatedUser model.User
-	err = json.NewDecoder(req.Body).Decode(&updatedUser)
+	err := json.NewDecoder(req.Body).Decode(&updatedUser)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	updatedUser.ID = id
-	user, err := h.userService.UpdateUser(updatedUser)
+	// updatedUser.ID = id // Remove this line
+	user, err := h.userService.UpdateUser(idParam, updatedUser) // Update the parameter to idParam
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -98,21 +88,17 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, req *http.Request) {
 // PatchUser handles the PATCH /users/{id} endpoint
 func (h *UserHandler) PatchUser(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID could not be converted to integer", http.StatusBadRequest)
-		return
-	}
+	// id, err := strconv.Atoi(idParam) // Remove this line
 
 	var patchedUser model.User
-	err = json.NewDecoder(req.Body).Decode(&patchedUser)
+	err := json.NewDecoder(req.Body).Decode(&patchedUser)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	patchedUser.ID = id
-	user, err := h.userService.PatchUser(patchedUser)
+	// patchedUser.ID = id // Remove this line
+	user, err := h.userService.PatchUser(idParam, patchedUser) // Update the parameter to idParam
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -124,13 +110,9 @@ func (h *UserHandler) PatchUser(w http.ResponseWriter, req *http.Request) {
 // DeleteUser handles the DELETE /users/{id} endpoint
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID could not be converted to integer", http.StatusBadRequest)
-		return
-	}
+	// id, err := strconv.Atoi(idParam) // Remove this line
 
-	err = h.userService.DeleteUser(id)
+	err := h.userService.DeleteUser(idParam) // Update the parameter to idParam
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"main.go/model"
 )
@@ -48,10 +49,10 @@ func (m *UserMongoDB) GetUsers() ([]model.User, error) {
 }
 
 // GetUserByID retrieves a user by ID from MongoDB
-func (m *UserMongoDB) GetUserByID(id int) (model.User, error) {
+func (m *UserMongoDB) GetUserByID(id string) (model.User, error) {
 	var user model.User
 
-	filter := bson.M{"id": id}
+	filter := bson.M{"_id": id}
 
 	err := m.db.FindOne(context.Background(), filter).Decode(&user)
 	if err != nil {
@@ -73,7 +74,7 @@ func (m *UserMongoDB) AddUser(user model.User) (model.User, error) {
 
 // UpdateUser updates a user in MongoDB
 func (m *UserMongoDB) UpdateUser(user model.User) (model.User, error) {
-	filter := bson.M{"id": user.ID}
+	filter := bson.M{"_id": user.ID}
 
 	update := bson.M{
 		"$set": bson.M{
@@ -93,7 +94,7 @@ func (m *UserMongoDB) UpdateUser(user model.User) (model.User, error) {
 
 // PatchUser partially updates a user in MongoDB
 func (m *UserMongoDB) PatchUser(user model.User) (model.User, error) {
-	filter := bson.M{"id": user.ID}
+	filter := bson.M{"_id": user.ID}
 
 	update := bson.M{}
 
@@ -115,11 +116,16 @@ func (m *UserMongoDB) PatchUser(user model.User) (model.User, error) {
 	return user, nil
 }
 
-// DeleteUser deletes a user by ID from MongoDB
-func (m *UserMongoDB) DeleteUser(id int) error {
-	filter := bson.M{"id": id}
+// DeleteUser deletes a user from MongoDB
+func (m *UserMongoDB) DeleteUser(id string) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
 
-	_, err := m.db.DeleteOne(context.Background(), filter)
+	filter := bson.M{"_id": objID}
+
+	_, err = m.db.DeleteOne(context.Background(), filter)
 	if err != nil {
 		return err
 	}

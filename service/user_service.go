@@ -23,7 +23,7 @@ func (s *UserService) GetUsers() ([]model.User, error) {
 }
 
 // GetUserByID returns a user by ID
-func (s *UserService) GetUserByID(id int) (model.User, error) {
+func (s *UserService) GetUserByID(id string) (model.User, error) {
 	return s.userRepository.GetUserByID(id)
 }
 
@@ -33,16 +33,16 @@ func (s *UserService) AddUser(user model.User) (model.User, error) {
 }
 
 // UpdateUser updates a user
-func (s *UserService) UpdateUser(user model.User) (model.User, error) {
+func (s *UserService) UpdateUser(id string, user model.User) (model.User, error) {
 	return s.userRepository.UpdateUser(user)
 }
 
 // PatchUser partially updates a user
-func (s *UserService) PatchUser(user model.User) (model.User, error) {
+func (s *UserService) PatchUser(id string, user model.User) (model.User, error) {
 	return s.userRepository.PatchUser(user)
 }
 
 // DeleteUser deletes a user by ID
-func (s *UserService) DeleteUser(id int) error {
+func (s *UserService) DeleteUser(id string) error {
 	return s.userRepository.DeleteUser(id)
 }

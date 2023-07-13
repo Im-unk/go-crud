@@ -56,7 +56,7 @@ func connectToMongoDB() (*mongo.Database, error) {
 	}
 
 	// Get the MongoDB database instance
-	db := client.Database("your-database-name")
+	db := client.Database("project")
 
 	// Return the MongoDB database instance
 	return db, nil

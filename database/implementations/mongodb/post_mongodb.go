@@ -51,7 +51,7 @@ func (m *PostMongoDB) GetPosts() ([]model.Post, error) {
 func (m *PostMongoDB) GetPostByID(id int) (model.Post, error) {
 	var post model.Post
 
-	filter := bson.M{"id": id}
+	filter := bson.M{"_id": id}
 
 	err := m.db.FindOne(context.Background(), filter).Decode(&post)
 	if err != nil {
@@ -71,9 +71,8 @@ func (m *PostMongoDB) AddPost(post model.Post) (model.Post, error) {
 	return post, nil
 }
 
-// UpdatePost updates a post in MongoDB
 func (m *PostMongoDB) UpdatePost(post model.Post) (model.Post, error) {
-	filter := bson.M{"id": post.ID}
+	filter := bson.M{"_id": post.ID} // Use "_id" instead of "id"
 
 	update := bson.M{
 		"$set": bson.M{
@@ -92,7 +91,7 @@ func (m *PostMongoDB) UpdatePost(post model.Post) (model.Post, error) {
 
 // PatchPost partially updates a post in MongoDB
 func (m *PostMongoDB) PatchPost(post model.Post) (model.Post, error) {
-	filter := bson.M{"id": post.ID}
+	filter := bson.M{"_id": post.ID}
 
 	update := bson.M{}
 
@@ -113,7 +112,7 @@ func (m *PostMongoDB) PatchPost(post model.Post) (model.Post, error) {
 
 // DeletePost deletes a post by ID from MongoDB
 func (m *PostMongoDB) DeletePost(id int) error {
-	filter := bson.M{"id": id}
+	filter := bson.M{"_id": id}
 
 	_, err := m.db.DeleteOne(context.Background(), filter)
 	if err != nil {

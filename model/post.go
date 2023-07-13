@@ -1,9 +1,10 @@
 package model
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 // Post represents a single post
 type Post struct {
-	ID     int    `json: "id"`
-	Title  string `json:"title"`
-	Body   string `json:"body"`
-	Author User   `json:"author"`
+	ID    primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Title string             `json:"title"`
+	Body  string             `json:"body"`
 }

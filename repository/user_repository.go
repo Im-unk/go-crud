@@ -23,7 +23,7 @@ func (r *UserRepository) GetUsers() ([]model.User, error) {
 }
 
 // GetUserByID returns a user by ID
-func (r *UserRepository) GetUserByID(id int) (model.User, error) {
+func (r *UserRepository) GetUserByID(id string) (model.User, error) {
 	return r.db.GetUserByID(id)
 }
 
@@ -43,6 +43,6 @@ func (r *UserRepository) PatchUser(user model.User) (model.User, error) {
 }
 
 // DeleteUser deletes a user by ID
-func (r *UserRepository) DeleteUser(id int) error {
+func (r *UserRepository) DeleteUser(id string) error {
 	return r.db.DeleteUser(id)
 }

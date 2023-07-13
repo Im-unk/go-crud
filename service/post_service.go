@@ -33,12 +33,12 @@ func (s *PostService) AddPost(post model.Post) (model.Post, error) {
 }
 
 // UpdatePost updates a post
-func (s *PostService) UpdatePost(post model.Post) (model.Post, error) {
+func (s *PostService) UpdatePost(id int, post model.Post) (model.Post, error) {
 	return s.postRepository.UpdatePost(post)
 }
 
 // PatchPost partially updates a post
-func (s *PostService) PatchPost(post model.Post) (model.Post, error) {
+func (s *PostService) PatchPost(id int, post model.Post) (model.Post, error) {
 	return s.postRepository.PatchPost(post)
 }
 
