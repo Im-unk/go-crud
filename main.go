@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"main.go/api"
+	cache "main.go/cache/implementation"
 	"main.go/database/implementations/mongodb"
 	"main.go/messaging"
 	"main.go/repository"
@@ -37,9 +38,21 @@ func main() {
 	// Create the MessagingService
 	messagingService := service.NewMessagingService(natsMessaging)
 
+	// Create the Redis cache instance
+	redisAddr := "127.0.0.1:6379"
+	redisPassword := ""
+	redisDB := 0
+
+	redisCache, err := cache.NewRedisCache(redisAddr, redisPassword, redisDB)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Create the CacheService
+	cacheService := service.NewCacheService(redisCache) // Pass the Redis cache instance
+
 	// Create the services
-	postService := service.NewPostService(postRepository, messagingService) // Pass the messagingService
-	userService := service.NewUserService(userRepository, messagingService) // Pass the messagingService
+	postService := service.NewPostService(postRepository, messagingService, cacheService) // Pass the messagingService
+	userService := service.NewUserService(userRepository, messagingService, cacheService) // Pass the messagingService
 
 	// Create the API router
 	router := api.NewRouter(postService, userService, messagingService) // Pass the messagingService

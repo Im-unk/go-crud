@@ -26,7 +26,7 @@ func NewUserMongoDB(database *mongo.Database) *UserMongoDB {
 func (m *UserMongoDB) GetUsers() ([]model.User, error) {
 	var users []model.User
 
-	cursor, err := m.db.Find(context.Background(), nil)
+	cursor, err := m.db.Find(context.Background(), bson.M{})
 	if err != nil {
 		return nil, err
 	}
@@ -78,8 +78,8 @@ func (m *UserMongoDB) UpdateUser(user model.User) (model.User, error) {
 
 	update := bson.M{
 		"$set": bson.M{
-			"fullName": user.FullName,
-			"userName": user.UserName,
+			"fullname": user.FullName,
+			"username": user.UserName,
 			"email":    user.Email,
 		},
 	}
@@ -99,10 +99,10 @@ func (m *UserMongoDB) PatchUser(user model.User) (model.User, error) {
 	update := bson.M{}
 
 	if user.FullName != "" {
-		update["$set"] = bson.M{"fullName": user.FullName}
+		update["$set"] = bson.M{"fullname": user.FullName}
 	}
 	if user.UserName != "" {
-		update["$set"] = bson.M{"userName": user.UserName}
+		update["$set"] = bson.M{"username": user.UserName}
 	}
 	if user.Email != "" {
 		update["$set"] = bson.M{"email": user.Email}

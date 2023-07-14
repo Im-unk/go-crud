@@ -1,50 +1,121 @@
 package service
 
 import (
+	"fmt"
+	"time"
+
 	"main.go/model"
 	"main.go/repository"
 )
 
-// UserService handles the user-related operations
 type UserService struct {
 	userRepository *repository.UserRepository
-	messaging      *MessagingService // Add the messaging service as a field
+	messaging      *MessagingService
+	cacheService   *CacheService
 }
 
-// NewUserService creates a new UserService
-func NewUserService(userRepository *repository.UserRepository, messaging *MessagingService) *UserService {
+func NewUserService(userRepository *repository.UserRepository, messaging *MessagingService, cacheService *CacheService) *UserService {
 	return &UserService{
 		userRepository: userRepository,
 		messaging:      messaging,
+		cacheService:   cacheService,
 	}
 }
 
-// GetUsers returns all users
 func (s *UserService) GetUsers() ([]model.User, error) {
-	return s.userRepository.GetUsers()
+	cacheKey := "users"
+	var users []model.User
+
+	// Try to get users from the cache
+	err := s.cacheService.Get(cacheKey, &users)
+	if err != nil {
+		// Cache miss, retrieve the users from the repository
+		users, err = s.userRepository.GetUsers()
+		if err != nil {
+			return nil, err
+		}
+
+		// Store the users in the cache
+		err = s.cacheService.Set(cacheKey, users, time.Hour)
+		if err != nil {
+			// Log the error, but don't affect the response
+			fmt.Printf("Failed to set users in cache: %v\n", err)
+		}
+	}
+
+	return users, nil
 }
 
-// GetUserByID returns a user by ID
 func (s *UserService) GetUserByID(id string) (model.User, error) {
-	return s.userRepository.GetUserByID(id)
+	cacheKey := fmt.Sprintf("user:%s", id)
+	var user model.User
+
+	// Try to get the user from the cache
+	err := s.cacheService.Get(cacheKey, &user)
+	if err != nil {
+		// Cache miss, retrieve the user from the repository
+		user, err = s.userRepository.GetUserByID(id)
+		if err != nil {
+			return model.User{}, err
+		}
+
+		// Store the user in the cache
+		err = s.cacheService.Set(cacheKey, user, time.Hour)
+		if err != nil {
+			// Log the error, but don't affect the response
+			fmt.Printf("Failed to set user in cache: %v\n", err)
+		}
+	}
+
+	return user, nil
 }
 
-// AddUser adds a new user
 func (s *UserService) AddUser(user model.User) (model.User, error) {
+	// Clear the users cache
+	err := s.cacheService.Delete("users")
+	if err != nil {
+		// Log the error, but don't affect the response
+		fmt.Printf("Failed to delete users cache: %v\n", err)
+	}
+
 	return s.userRepository.AddUser(user)
 }
 
-// UpdateUser updates a user
 func (s *UserService) UpdateUser(id string, user model.User) (model.User, error) {
+	cacheKey := fmt.Sprintf("user:%s", id)
+
+	// Clear the user cache
+	err := s.cacheService.Delete(cacheKey)
+	if err != nil {
+		// Log the error, but don't affect the response
+		fmt.Printf("Failed to delete user cache: %v\n", err)
+	}
+
 	return s.userRepository.UpdateUser(user)
 }
 
-// PatchUser partially updates a user
 func (s *UserService) PatchUser(id string, user model.User) (model.User, error) {
+	cacheKey := fmt.Sprintf("user:%s", id)
+
+	// Clear the user cache
+	err := s.cacheService.Delete(cacheKey)
+	if err != nil {
+		// Log the error, but don't affect the response
+		fmt.Printf("Failed to delete user cache: %v\n", err)
+	}
+
 	return s.userRepository.PatchUser(user)
 }
 
-// DeleteUser deletes a user by ID
 func (s *UserService) DeleteUser(id string) error {
+	cacheKey := fmt.Sprintf("user:%s", id)
+
+	// Clear the user cache
+	err := s.cacheService.Delete(cacheKey)
+	if err != nil {
+		// Log the error, but don't affect the response
+		fmt.Printf("Failed to delete user cache: %v\n", err)
+	}
+
 	return s.userRepository.DeleteUser(id)
 }
