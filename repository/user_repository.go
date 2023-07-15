@@ -1,6 +1,10 @@
 package repository
 
 import (
+	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	database "main.go/database/models"
 	"main.go/model"
 )
@@ -24,7 +28,14 @@ func (r *UserRepository) GetUsers() ([]model.User, error) {
 
 // GetUserByID returns a user by ID
 func (r *UserRepository) GetUserByID(id string) (model.User, error) {
-	return r.db.GetUserByID(id)
+
+	// Convert the string ID to an ObjectId
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return model.User{}, fmt.Errorf("invalid object ID format: %v", err)
+	}
+
+	return r.db.GetUserByID(objID)
 }
 
 // AddUser adds a new user
@@ -33,8 +44,20 @@ func (r *UserRepository) AddUser(user model.User) (model.User, error) {
 }
 
 // UpdateUser updates a user
-func (r *UserRepository) UpdateUser(user model.User) (model.User, error) {
-	return r.db.UpdateUser(user)
+func (r *UserRepository) UpdateUser(user model.User) error {
+	fmt.Println("repo: Updating user with ID:", user.ID)
+
+	filter := bson.M{"_id": user.ID}
+
+	update := bson.M{
+		"$set": bson.M{
+			"fullname": user.FullName,
+			"username": user.UserName,
+			"email":    user.Email,
+		},
+	}
+
+	return r.db.UpdateUser(filter, update)
 }
 
 // PatchUser partially updates a user
@@ -44,5 +67,13 @@ func (r *UserRepository) PatchUser(user model.User) (model.User, error) {
 
 // DeleteUser deletes a user by ID
 func (r *UserRepository) DeleteUser(id string) error {
-	return r.db.DeleteUser(id)
+	fmt.Println("repo: Deleting user with ID:", id)
+
+	// Convert the string ID to an ObjectId
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("invalid object ID format: %v", err)
+	}
+
+	return r.db.DeleteUser(objID)
 }

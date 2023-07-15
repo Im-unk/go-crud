@@ -25,7 +25,7 @@ func NewPostMongoDB(database *mongo.Database) *PostMongoDB {
 func (m *PostMongoDB) GetPosts() ([]model.Post, error) {
 	var posts []model.Post
 
-	cursor, err := m.db.Find(context.Background(), nil)
+	cursor, err := m.db.Find(context.Background(), bson.M{})
 	if err != nil {
 		return nil, err
 	}

@@ -49,6 +49,7 @@ func (s *UserService) GetUsers() ([]model.User, error) {
 func (s *UserService) GetUserByID(id string) (model.User, error) {
 	cacheKey := fmt.Sprintf("user:%s", id)
 	var user model.User
+	fmt.Println("service: Fetching user with ID:", id)
 
 	// Try to get the user from the cache
 	err := s.cacheService.Get(cacheKey, &user)
@@ -81,7 +82,7 @@ func (s *UserService) AddUser(user model.User) (model.User, error) {
 	return s.userRepository.AddUser(user)
 }
 
-func (s *UserService) UpdateUser(id string, user model.User) (model.User, error) {
+func (s *UserService) UpdateUser(id string, user model.User) error {
 	cacheKey := fmt.Sprintf("user:%s", id)
 
 	// Clear the user cache
@@ -91,6 +92,7 @@ func (s *UserService) UpdateUser(id string, user model.User) (model.User, error)
 		fmt.Printf("Failed to delete user cache: %v\n", err)
 	}
 
+	// Update the user in the repository
 	return s.userRepository.UpdateUser(user)
 }
 

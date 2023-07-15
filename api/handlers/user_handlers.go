@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -54,8 +55,8 @@ func (h *UserHandler) AddUser(w http.ResponseWriter, req *http.Request) {
 
 // GetUser handles the GET /users/{id} endpoint
 func (h *UserHandler) GetUser(w http.ResponseWriter, req *http.Request) {
-	idParam := mux.Vars(req)["_id"]
-
+	idParam := mux.Vars(req)["id"]
+	fmt.Println("handler: Fetching user with ID:", idParam)
 	user, err := h.userService.GetUserByID(idParam)
 	if err != nil {
 		http.Error(w, "No data found with specified ID", http.StatusNotFound)
@@ -67,7 +68,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, req *http.Request) {
 
 // UpdateUser handles the PUT /users/{id} endpoint
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, req *http.Request) {
-	idParam := mux.Vars(req)["_id"]
+	idParam := mux.Vars(req)["id"]
 	// id, err := strconv.Atoi(idParam) // Remove this line
 
 	var updatedUser model.User
@@ -78,18 +79,18 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// updatedUser.ID = id // Remove this line
-	user, err := h.userService.UpdateUser(idParam, updatedUser) // Update the parameter to idParam
+	err = h.userService.UpdateUser(idParam, updatedUser) // Update the parameter to idParam
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	writeResponse(w, user)
+	writeResponse(w, updatedUser) // Use updatedUser instead of user
 }
 
 // PatchUser handles the PATCH /users/{id} endpoint
 func (h *UserHandler) PatchUser(w http.ResponseWriter, req *http.Request) {
-	idParam := mux.Vars(req)["_id"]
+	idParam := mux.Vars(req)["id"]
 	// id, err := strconv.Atoi(idParam) // Remove this line
 
 	var patchedUser model.User
@@ -111,7 +112,7 @@ func (h *UserHandler) PatchUser(w http.ResponseWriter, req *http.Request) {
 
 // DeleteUser handles the DELETE /users/{id} endpoint
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, req *http.Request) {
-	idParam := mux.Vars(req)["_id"]
+	idParam := mux.Vars(req)["id"]
 	// id, err := strconv.Atoi(idParam) // Remove this line
 
 	err := h.userService.DeleteUser(idParam) // Update the parameter to idParam

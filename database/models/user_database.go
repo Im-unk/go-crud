@@ -1,13 +1,17 @@
 package database
 
-import "main.go/model"
+import (
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"main.go/model"
+)
 
 // UserDatabase provides an abstraction for user-related database operations
 type UserDatabase interface {
 	GetUsers() ([]model.User, error)
-	GetUserByID(id string) (model.User, error)
+	GetUserByID(id primitive.ObjectID) (model.User, error)
 	AddUser(user model.User) (model.User, error)
-	UpdateUser(user model.User) (model.User, error)
+	UpdateUser(filter, update bson.M) error
 	PatchUser(post model.User) (model.User, error)
-	DeleteUser(id string) error
+	DeleteUser(id primitive.ObjectID) error
 }
