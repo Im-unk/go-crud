@@ -111,9 +111,6 @@ func (m *UserMongoDB) PatchUser(user model.User) (model.User, error) {
 }
 
 func (m *UserMongoDB) DeleteUser(id primitive.ObjectID) error {
-	// Print the ID before executing the delete operation
-	fmt.Println("Deleting user with ID:", id)
-
 	filter := bson.M{"_id": id}
 
 	_, err := m.db.DeleteOne(context.Background(), filter)

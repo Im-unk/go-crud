@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"main.go/model"
 	"main.go/repository"
 )
@@ -79,7 +80,23 @@ func (s *UserService) AddUser(user model.User) (model.User, error) {
 		fmt.Printf("Failed to delete users cache: %v\n", err)
 	}
 
-	return s.userRepository.AddUser(user)
+	// Add the user to the repository
+	addedUser, err := s.userRepository.AddUser(user)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	// Convert the primitive.ObjectID to a string
+	userID := addedUser.ID.Hex()
+
+	// Publish a message indicating a new user has been added
+	err = s.messaging.Publish("user.added", []byte(userID))
+	if err != nil {
+		// Log the error, but don't affect the response
+		fmt.Printf("Failed to publish user.added message: %v\n", err)
+	}
+
+	return addedUser, nil
 }
 
 func (s *UserService) UpdateUser(id string, user model.User) error {
@@ -93,7 +110,25 @@ func (s *UserService) UpdateUser(id string, user model.User) error {
 	}
 
 	// Update the user in the repository
-	return s.userRepository.UpdateUser(user)
+	err = s.userRepository.UpdateUser(user)
+	if err != nil {
+		return err
+	}
+
+	// Convert the string ID to a primitive.ObjectID
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("invalid object ID format: %v", err)
+	}
+
+	// Publish a message indicating a user has been updated
+	err = s.messaging.Publish("user.updated", []byte(objID.Hex()))
+	if err != nil {
+		// Log the error, but don't affect the response
+		fmt.Printf("Failed to publish user.updated message: %v\n", err)
+	}
+
+	return nil
 }
 
 func (s *UserService) PatchUser(id string, user model.User) (model.User, error) {
@@ -119,5 +154,18 @@ func (s *UserService) DeleteUser(id string) error {
 		fmt.Printf("Failed to delete user cache: %v\n", err)
 	}
 
-	return s.userRepository.DeleteUser(id)
+	// Delete the user from the repository
+	err = s.userRepository.DeleteUser(id)
+	if err != nil {
+		return err
+	}
+
+	// Publish a message indicating a user has been deleted
+	err = s.messaging.Publish("user.deleted", []byte(id))
+	if err != nil {
+		// Log the error, but don't affect the response
+		fmt.Printf("Failed to publish user.deleted message: %v\n", err)
+	}
+
+	return nil
 }

@@ -56,13 +56,7 @@ func (h *PostHandler) AddPost(w http.ResponseWriter, req *http.Request) {
 // GetPost handles the GET /posts/{id} endpoint
 func (h *PostHandler) GetPost(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID could not be converted to integer", http.StatusBadRequest)
-		return
-	}
-
-	post, err := h.postService.GetPostByID(id)
+	post, err := h.postService.GetPostByID(idParam)
 	if err != nil {
 		http.Error(w, "No data found with specified ID", http.StatusNotFound)
 		return
@@ -125,13 +119,8 @@ func (h *PostHandler) PatchPost(w http.ResponseWriter, req *http.Request) {
 // DeletePost handles the DELETE /posts/{id} endpoint
 func (h *PostHandler) DeletePost(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID could not be converted to integer", http.StatusBadRequest)
-		return
-	}
 
-	err = h.postService.DeletePost(id)
+	err := h.postService.DeletePost(idParam)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

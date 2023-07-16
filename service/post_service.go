@@ -46,7 +46,7 @@ func (s *PostService) GetPosts() ([]model.Post, error) {
 	return posts, nil
 }
 
-func (s *PostService) GetPostByID(id int) (model.Post, error) {
+func (s *PostService) GetPostByID(id string) (model.Post, error) {
 	cacheKey := fmt.Sprintf("post:%d", id)
 	var post model.Post
 
@@ -107,7 +107,7 @@ func (s *PostService) PatchPost(id int, post model.Post) (model.Post, error) {
 	return s.postRepository.PatchPost(post)
 }
 
-func (s *PostService) DeletePost(id int) error {
+func (s *PostService) DeletePost(id string) error {
 	cacheKey := fmt.Sprintf("post:%d", id)
 
 	// Clear the post cache

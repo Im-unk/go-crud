@@ -67,7 +67,6 @@ func (r *UserRepository) PatchUser(user model.User) (model.User, error) {
 
 // DeleteUser deletes a user by ID
 func (r *UserRepository) DeleteUser(id string) error {
-	fmt.Println("repo: Deleting user with ID:", id)
 
 	// Convert the string ID to an ObjectId
 	objID, err := primitive.ObjectIDFromHex(id)

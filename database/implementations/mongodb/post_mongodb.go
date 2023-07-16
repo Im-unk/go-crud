@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"main.go/model"
 )
@@ -48,7 +49,7 @@ func (m *PostMongoDB) GetPosts() ([]model.Post, error) {
 }
 
 // GetPostByID retrieves a post by ID from MongoDB
-func (m *PostMongoDB) GetPostByID(id int) (model.Post, error) {
+func (m *PostMongoDB) GetPostByID(id primitive.ObjectID) (model.Post, error) {
 	var post model.Post
 
 	filter := bson.M{"_id": id}
@@ -111,7 +112,7 @@ func (m *PostMongoDB) PatchPost(post model.Post) (model.Post, error) {
 }
 
 // DeletePost deletes a post by ID from MongoDB
-func (m *PostMongoDB) DeletePost(id int) error {
+func (m *PostMongoDB) DeletePost(id primitive.ObjectID) error {
 	filter := bson.M{"_id": id}
 
 	_, err := m.db.DeleteOne(context.Background(), filter)
