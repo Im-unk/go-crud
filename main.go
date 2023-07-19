@@ -12,6 +12,7 @@ import (
 	"main.go/database/implementations/mongodb"
 	"main.go/messaging"
 	"main.go/repository"
+	"main.go/search"
 	"main.go/service"
 )
 
@@ -22,11 +23,22 @@ func main() {
 		log.Fatal(err)
 	}
 
+	//setting up the Elastic Search Configuration
+	esURL := "http://localhost:9200"
+	esUsername := "root"
+	esPassword := "123456"
+
+	// Create the ElasticSearchEngine instance with the necessary configurations
+	esEngine, err := search.NewElasticSearchEngine(esURL, esUsername, esPassword)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Create the PostRepository using the MongoDB database instance
 	postRepository := repository.NewPostRepository(mongodb.NewPostMongoDB(mongoDB))
 
 	// Create the UserRepository using the MongoDB database instance
-	userRepository := repository.NewUserRepository(mongodb.NewUserMongoDB(mongoDB))
+	userRepository := repository.NewUserRepository(mongodb.NewUserMongoDB(mongoDB), esEngine)
 
 	// Create the NATS messaging system
 	natsURL := "nats://localhost:4222" // Default URL
@@ -47,6 +59,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// Create the CacheService
 	cacheService := service.NewCacheService(redisCache) // Pass the Redis cache instance
 

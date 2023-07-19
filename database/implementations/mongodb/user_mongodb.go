@@ -77,13 +77,23 @@ func (m *UserMongoDB) AddUser(user model.User) (model.User, error) {
 }
 
 // UpdateUser updates a user in MongoDB
-func (m *UserMongoDB) UpdateUser(filter, update bson.M) error {
-	_, err := m.db.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		return err
+func (m *UserMongoDB) UpdateUser(user model.User) (model.User, error) {
+	filter := bson.M{"_id": user.ID}
+
+	update := bson.M{
+		"$set": bson.M{
+			"fullname": user.FullName,
+			"username": user.UserName,
+			"email":    user.Email,
+		},
 	}
 
-	return nil
+	_, err := m.db.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	return user, nil
 }
 
 // PatchUser partially updates a user in MongoDB
