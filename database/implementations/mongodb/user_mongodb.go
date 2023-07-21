@@ -141,6 +141,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"main.go/cache"
 	"main.go/model"
 )
@@ -236,6 +237,19 @@ func (m *UserMongoDB) getUserByIDFromDB(id primitive.ObjectID) (model.User, erro
 	filter := bson.M{"_id": id}
 
 	err := m.db.FindOne(context.Background(), filter).Decode(&user)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	return user, nil
+}
+
+func (m *UserMongoDB) GetLatestInsertedUser() (model.User, error) {
+	// Sort the users by insertion time in descending order
+	opts := options.FindOne().SetSort(bson.M{"_id": -1})
+
+	var user model.User
+	err := m.db.FindOne(context.Background(), bson.M{}, opts).Decode(&user)
 	if err != nil {
 		return model.User{}, err
 	}

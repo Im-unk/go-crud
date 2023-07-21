@@ -9,6 +9,7 @@ import (
 type UserDatabase interface {
 	GetUsers() ([]model.User, error)
 	GetUserByID(id primitive.ObjectID) (model.User, error)
+	GetLatestInsertedUser() (model.User, error)
 	AddUser(user model.User) (model.User, error)
 	UpdateUser(user model.User) (model.User, error)
 	PatchUser(post model.User) (model.User, error)

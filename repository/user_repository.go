@@ -41,7 +41,33 @@ func (r *UserRepository) GetUserByID(id string) (model.User, error) {
 	return r.db.GetUserByID(objID)
 }
 
+func (r *UserRepository) GetLatestInsertedUser() (model.User, error) {
+	return r.db.GetLatestInsertedUser()
+}
+
 // AddUser adds a new user
+// func (r *UserRepository) AddUser(user model.User) (model.User, error) {
+// 	// First, add the user to the database
+// 	newUser, err := r.db.AddUser(user)
+// 	if err != nil {
+// 		return newUser, err
+// 	}
+
+// 	// Next, index the new user data in ElasticSearch
+// 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
+// 	err = r.searchEngine.IndexDocument(indexName, newUser)
+// 	if err != nil {
+// 		// If indexing fails, you may choose to handle this error accordingly,
+// 		// like rolling back the user creation in the database.
+// 		// For simplicity, we're not handling the error here.
+// 		log.Println("Failed to index user in ElasticSearch:", err)
+// 	} else {
+// 		log.Println("User indexed successfully in ElasticSearch")
+// 	}
+
+// 	return newUser, nil
+// }
+
 func (r *UserRepository) AddUser(user model.User) (model.User, error) {
 	// First, add the user to the database
 	newUser, err := r.db.AddUser(user)
@@ -49,9 +75,17 @@ func (r *UserRepository) AddUser(user model.User) (model.User, error) {
 		return newUser, err
 	}
 
-	// Next, index the new user data in ElasticSearch
+	// Get the latest inserted user from the database
+	latestUser, err := r.GetLatestInsertedUser()
+	if err != nil {
+		// Handle the error if necessary
+		log.Println("Failed to get the latest inserted user from the database:", err)
+		return newUser, nil
+	}
+
+	// Next, index the new user data in ElasticSearch with the provided "_id"
 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
-	err = r.searchEngine.IndexDocument(indexName, newUser)
+	err = r.searchEngine.IndexDocument(indexName, latestUser.ID.Hex(), newUser)
 	if err != nil {
 		// If indexing fails, you may choose to handle this error accordingly,
 		// like rolling back the user creation in the database.
@@ -98,22 +132,9 @@ func (r *UserRepository) DeleteUser(id string) error {
 		return fmt.Errorf("invalid object ID format: %v", err)
 	}
 
-	// storing the user by the ID in the new user
-	newUser, err2 := r.db.GetUserByID(objID)
-	if err2 != nil {
-		return fmt.Errorf("Couldn't find the user %v", err2)
-	}
-
-	fmt.Print(newUser.Email)
-
-	err = r.db.DeleteUser(objID)
-	if err != nil {
-		return err
-	}
-
 	// Next, remove the user data from ElasticSearch
 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
-	err = r.searchEngine.DeleteDocumentByUniqueID(indexName, "email", newUser.Email)
+	err = r.searchEngine.DeleteDocument(indexName, objID.Hex())
 	if err != nil {
 		// If removing from ElasticSearch fails, you may choose to handle this error accordingly.
 		// For simplicity, we're not handling the error here.

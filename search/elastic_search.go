@@ -30,9 +30,11 @@ func NewElasticSearchEngine(url, username, password string) (*ElasticSearchEngin
 	return &ElasticSearchEngine{client: client}, nil
 }
 
-// IndexDocument indexes a document in the Elasticsearch index.
-func (e *ElasticSearchEngine) IndexDocument(index string, data interface{}) error {
+func (e *ElasticSearchEngine) IndexDocument(index string, id string, data interface{}) error {
 	ctx := context.Background()
+
+	// Create a map to store the data fields for indexing
+	docData := make(map[string]interface{})
 
 	// Get the reflect value of the data to work with its fields
 	value := reflect.ValueOf(data)
@@ -44,9 +46,6 @@ func (e *ElasticSearchEngine) IndexDocument(index string, data interface{}) erro
 	if value.Kind() != reflect.Struct {
 		return fmt.Errorf("data must be a struct")
 	}
-
-	// Create a map to store the data fields for indexing
-	docData := make(map[string]interface{})
 
 	// Iterate over the fields of the struct and extract the field names and values
 	for i := 0; i < value.NumField(); i++ {
@@ -61,8 +60,13 @@ func (e *ElasticSearchEngine) IndexDocument(index string, data interface{}) erro
 		docData[jsonTag] = fieldValue
 	}
 
+	// Add the "id" field to the document data
+	docData["id"] = id
+
+	// Use the provided "id" as the Elasticsearch document ID
 	_, err := e.client.Index().
 		Index(index).
+		Id(id).
 		BodyJson(docData).
 		Do(ctx)
 
@@ -74,37 +78,6 @@ func (e *ElasticSearchEngine) DeleteDocument(index, docID string) error {
 	ctx := context.Background()
 
 	_, err := e.client.Delete().
-		Index(index).
-		Id(docID).
-		Do(ctx)
-
-	return err
-}
-
-// DeleteDocumentByUniqueID removes a document from the Elasticsearch index by a unique identifier (e.g., email or username).
-func (e *ElasticSearchEngine) DeleteDocumentByUniqueID(index string, uniqueIDField string, uniqueIDValue string) error {
-	ctx := context.Background()
-
-	// Implement the logic to find the document by the unique identifier and get its ID.
-	// For example, if uniqueIDField is "email", you can use a search query to find the document by the email value.
-	// Extract the document ID and then delete the document using the DeleteDocument function.
-
-	// Example code (replace with your actual logic):
-	query := elastic.NewTermQuery(uniqueIDField, uniqueIDValue)
-	searchResult, err := e.client.Search().Index(index).Query(query).Do(ctx)
-	if err != nil {
-		return err
-	}
-
-	if searchResult.TotalHits() == 0 {
-		return fmt.Errorf("document with unique identifier not found")
-	}
-
-	// Assuming there's only one document matching the unique identifier, get its ID.
-	docID := searchResult.Hits.Hits[0].Id
-
-	// Delete the document using the DeleteDocument function.
-	_, err = e.client.Delete().
 		Index(index).
 		Id(docID).
 		Do(ctx)
