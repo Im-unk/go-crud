@@ -45,29 +45,6 @@ func (r *UserRepository) GetLatestInsertedUser() (model.User, error) {
 	return r.db.GetLatestInsertedUser()
 }
 
-// AddUser adds a new user
-// func (r *UserRepository) AddUser(user model.User) (model.User, error) {
-// 	// First, add the user to the database
-// 	newUser, err := r.db.AddUser(user)
-// 	if err != nil {
-// 		return newUser, err
-// 	}
-
-// 	// Next, index the new user data in ElasticSearch
-// 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
-// 	err = r.searchEngine.IndexDocument(indexName, newUser)
-// 	if err != nil {
-// 		// If indexing fails, you may choose to handle this error accordingly,
-// 		// like rolling back the user creation in the database.
-// 		// For simplicity, we're not handling the error here.
-// 		log.Println("Failed to index user in ElasticSearch:", err)
-// 	} else {
-// 		log.Println("User indexed successfully in ElasticSearch")
-// 	}
-
-// 	return newUser, nil
-// }
-
 func (r *UserRepository) AddUser(user model.User) (model.User, error) {
 	// First, add the user to the database
 	newUser, err := r.db.AddUser(user)
@@ -98,43 +75,65 @@ func (r *UserRepository) AddUser(user model.User) (model.User, error) {
 	return newUser, nil
 }
 
-// UpdateUser updates a user
 func (r *UserRepository) UpdateUser(user model.User) error {
-
 	// First, update the user in the database
-	r.db.UpdateUser(user)
+	updatedUser, err := r.db.UpdateUser(user)
+	if err != nil {
+		return err
+	}
 
-	// Next, update the user data in ElasticSearch
-	// indexName := "users" // The name of the Elasticsearch index where user data is stored.
-	// err := r.searchEngine.IndexDocumentUpdate(indexName, user.ID.Hex(), user)
-	// if err != nil {
-	// 	// If indexing fails, you may choose to handle this error accordingly.
-	// 	// For simplicity, we're not handling the error here.
-	// 	log.Println("Failed to update user data in ElasticSearch:", err)
-	// } else {
-	// 	log.Println("User data updated successfully in ElasticSearch")
-	// }
+	// Next, update the user data in Elasticsearch
+	indexName := "users" // The name of the Elasticsearch index where user data is stored.
+	err = r.searchEngine.IndexDocument(indexName, updatedUser.ID.Hex(), updatedUser)
+	if err != nil {
+		// If indexing fails, you may choose to handle this error accordingly.
+		// For simplicity, we're not handling the error here.
+		log.Println("Failed to update user data in ElasticSearch:", err)
+	} else {
+		log.Println("User data updated successfully in ElasticSearch")
+	}
 
 	return nil
 }
 
-// PatchUser partially updates a user
 func (r *UserRepository) PatchUser(user model.User) (model.User, error) {
-	return r.db.PatchUser(user)
+	// First, patch the user in the database
+	patchedUser, err := r.db.PatchUser(user)
+	if err != nil {
+		return model.User{}, err
+	}
+
+	// Next, update the user data in Elasticsearch
+	indexName := "users" // The name of the Elasticsearch index where user data is stored.
+	err = r.searchEngine.IndexDocument(indexName, patchedUser.ID.Hex(), patchedUser)
+	if err != nil {
+		// If indexing fails, you may choose to handle this error accordingly.
+		// For simplicity, we're not handling the error here.
+		log.Println("Failed to update user data in ElasticSearch:", err)
+	} else {
+		log.Println("User data updated successfully in ElasticSearch")
+	}
+
+	return patchedUser, nil
 }
 
 // DeleteUser deletes a user by ID
 func (r *UserRepository) DeleteUser(id string) error {
-
-	// First, delete the user from the database
+	// Convert the string ID to an ObjectId
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return fmt.Errorf("invalid object ID format: %v", err)
 	}
 
+	// First, delete the user from the database
+	err = r.db.DeleteUser(objID)
+	if err != nil {
+		return err
+	}
+
 	// Next, remove the user data from ElasticSearch
 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
-	err = r.searchEngine.DeleteDocument(indexName, objID.Hex())
+	err = r.searchEngine.DeleteDocument(indexName, id)
 	if err != nil {
 		// If removing from ElasticSearch fails, you may choose to handle this error accordingly.
 		// For simplicity, we're not handling the error here.
