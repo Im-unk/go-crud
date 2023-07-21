@@ -31,19 +31,6 @@ func NewElasticSearchEngine(url, username, password string) (*ElasticSearchEngin
 }
 
 // IndexDocument indexes a document in the Elasticsearch index.
-// func (e *ElasticSearchEngine) IndexDocument(index string, data interface{}) error {
-// 	ctx := context.Background()
-
-// 	_, err := e.client.Index().
-// 		Index(index).
-// 		Id("").
-// 		BodyJson(data).
-// 		Do(ctx)
-
-// 	return err
-// }
-
-// IndexDocument indexes a document in the Elasticsearch index.
 func (e *ElasticSearchEngine) IndexDocument(index string, data interface{}) error {
 	ctx := context.Background()
 

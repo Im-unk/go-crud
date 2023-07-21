@@ -98,9 +98,10 @@ func (r *UserRepository) DeleteUser(id string) error {
 		return fmt.Errorf("invalid object ID format: %v", err)
 	}
 
+	// storing the user by the ID in the new user
 	newUser, err2 := r.db.GetUserByID(objID)
 	if err2 != nil {
-		return fmt.Errorf("Couldn't find the user ", err2)
+		return fmt.Errorf("Couldn't find the user %v", err2)
 	}
 
 	fmt.Print(newUser.Email)

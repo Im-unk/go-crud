@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"main.go/model"
@@ -12,75 +11,25 @@ import (
 type UserService struct {
 	userRepository *repository.UserRepository
 	messaging      *MessagingService
-	cacheService   *CacheService
 }
 
-func NewUserService(userRepository *repository.UserRepository, messaging *MessagingService, cacheService *CacheService) *UserService {
+func NewUserService(userRepository *repository.UserRepository, messaging *MessagingService) *UserService {
 	return &UserService{
 		userRepository: userRepository,
 		messaging:      messaging,
-		cacheService:   cacheService,
 	}
 }
 
 func (s *UserService) GetUsers() ([]model.User, error) {
-	cacheKey := "users"
-	var users []model.User
-
-	// Try to get users from the cache
-	err := s.cacheService.Get(cacheKey, &users)
-	if err != nil {
-		// Cache miss, retrieve the users from the repository
-		users, err = s.userRepository.GetUsers()
-		if err != nil {
-			return nil, err
-		}
-
-		// Store the users in the cache
-		err = s.cacheService.Set(cacheKey, users, time.Hour)
-		if err != nil {
-			// Log the error, but don't affect the response
-			fmt.Printf("Failed to set users in cache: %v\n", err)
-		}
-	}
-
-	return users, nil
+	return s.userRepository.GetUsers()
 }
 
 func (s *UserService) GetUserByID(id string) (model.User, error) {
-	cacheKey := fmt.Sprintf("user:%s", id)
-	var user model.User
-	fmt.Println("service: Fetching user with ID:", id)
-
-	// Try to get the user from the cache
-	err := s.cacheService.Get(cacheKey, &user)
-	if err != nil {
-		// Cache miss, retrieve the user from the repository
-		user, err = s.userRepository.GetUserByID(id)
-		if err != nil {
-			return model.User{}, err
-		}
-
-		// Store the user in the cache
-		err = s.cacheService.Set(cacheKey, user, time.Hour)
-		if err != nil {
-			// Log the error, but don't affect the response
-			fmt.Printf("Failed to set user in cache: %v\n", err)
-		}
-	}
-
-	return user, nil
+	// Directly call the repository method to get user by ID
+	return s.userRepository.GetUserByID(id)
 }
 
 func (s *UserService) AddUser(user model.User) (model.User, error) {
-	// Clear the users cache
-	err := s.cacheService.Delete("users")
-	if err != nil {
-		// Log the error, but don't affect the response
-		fmt.Printf("Failed to delete users cache: %v\n", err)
-	}
-
-	// Add the user to the repository
 	addedUser, err := s.userRepository.AddUser(user)
 	if err != nil {
 		return model.User{}, err
@@ -100,25 +49,16 @@ func (s *UserService) AddUser(user model.User) (model.User, error) {
 }
 
 func (s *UserService) UpdateUser(id string, user model.User) error {
-	cacheKey := fmt.Sprintf("user:%s", id)
-
-	// Clear the user cache
-	err := s.cacheService.Delete(cacheKey)
+	// Convert the string ID to a primitive.ObjectID
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		// Log the error, but don't affect the response
-		fmt.Printf("Failed to delete user cache: %v\n", err)
+		return fmt.Errorf("invalid object ID format: %v", err)
 	}
 
 	// Update the user in the repository
 	err = s.userRepository.UpdateUser(user)
 	if err != nil {
 		return err
-	}
-
-	// Convert the string ID to a primitive.ObjectID
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return fmt.Errorf("invalid object ID format: %v", err)
 	}
 
 	// Publish a message indicating a user has been updated
@@ -132,30 +72,25 @@ func (s *UserService) UpdateUser(id string, user model.User) error {
 }
 
 func (s *UserService) PatchUser(id string, user model.User) (model.User, error) {
-	cacheKey := fmt.Sprintf("user:%s", id)
-
-	// Clear the user cache
-	err := s.cacheService.Delete(cacheKey)
+	// Patch the user in the repository
+	patchedUser, err := s.userRepository.PatchUser(user)
 	if err != nil {
-		// Log the error, but don't affect the response
-		fmt.Printf("Failed to delete user cache: %v\n", err)
+		return model.User{}, err
 	}
 
-	return s.userRepository.PatchUser(user)
+	// Publish a message indicating a user has been updated
+	err = s.messaging.Publish("user.updated", []byte(patchedUser.ID.Hex()))
+	if err != nil {
+		// Log the error, but don't affect the response
+		fmt.Printf("Failed to publish user.updated message: %v\n", err)
+	}
+
+	return patchedUser, nil
 }
 
 func (s *UserService) DeleteUser(id string) error {
-	cacheKey := fmt.Sprintf("user:%s", id)
-
-	// Clear the user cache
-	err := s.cacheService.Delete(cacheKey)
-	if err != nil {
-		// Log the error, but don't affect the response
-		fmt.Printf("Failed to delete user cache: %v\n", err)
-	}
-
-	// Delete the user from the repository
-	err = s.userRepository.DeleteUser(id)
+	// Directly call the repository method to delete user
+	err := s.userRepository.DeleteUser(id)
 	if err != nil {
 		return err
 	}

@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"main.go/api"
 	cache "main.go/cache/implementation"
+	"main.go/database"
 	"main.go/database/implementations/mongodb"
 	"main.go/messaging"
 	"main.go/repository"
@@ -34,22 +35,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Create the PostRepository using the MongoDB database instance
-	postRepository := repository.NewPostRepository(mongodb.NewPostMongoDB(mongoDB))
-
-	// Create the UserRepository using the MongoDB database instance
-	userRepository := repository.NewUserRepository(mongodb.NewUserMongoDB(mongoDB), esEngine)
-
-	// Create the NATS messaging system
-	natsURL := "nats://localhost:4222" // Default URL
-	natsMessaging, err := messaging.NewNatsMessaging(natsURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Create the MessagingService
-	messagingService := service.NewMessagingService(natsMessaging)
-
 	// Create the Redis cache instance
 	redisAddr := "127.0.0.1:6379"
 	redisPassword := ""
@@ -61,11 +46,30 @@ func main() {
 	}
 
 	// Create the CacheService
+	cacheDatabse := database.NewCacheDatabase(redisCache) // Pass the Redis cache instance
+
+	// Create the PostRepository using the MongoDB database instance
+	postRepository := repository.NewPostRepository(mongodb.NewPostMongoDB(mongoDB))
+
+	// Create the UserRepository using the MongoDB database instance
+	userRepository := repository.NewUserRepository(mongodb.NewUserMongoDB(mongoDB, cacheDatabse), esEngine)
+
+	// Create the NATS messaging system
+	natsURL := "nats://localhost:4222" // Default URL
+	natsMessaging, err := messaging.NewNatsMessaging(natsURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Create the MessagingService
+	messagingService := service.NewMessagingService(natsMessaging)
+
+	// Create the CacheService
 	cacheService := service.NewCacheService(redisCache) // Pass the Redis cache instance
 
 	// Create the services
 	postService := service.NewPostService(postRepository, messagingService, cacheService) // Pass the messagingService
-	userService := service.NewUserService(userRepository, messagingService, cacheService) // Pass the messagingService
+	userService := service.NewUserService(userRepository, messagingService)               // Pass the messagingService
 
 	// Create the API router
 	router := api.NewRouter(postService, userService, messagingService) // Pass the messagingService
