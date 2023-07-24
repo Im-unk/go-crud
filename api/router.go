@@ -36,6 +36,7 @@ func NewRouter(postService *service.PostService, userService *service.UserServic
 	router.HandleFunc("/users/{id}", userHandler.UpdateUser).Methods("PUT")
 	router.HandleFunc("/users/{id}", userHandler.PatchUser).Methods("PATCH")
 	router.HandleFunc("/users/{id}", userHandler.DeleteUser).Methods("DELETE")
+	router.HandleFunc("/users/search/{query}", userHandler.SearchUser).Methods("GET")
 
 	return &Router{
 		router:      router,

@@ -64,9 +64,6 @@ func (r *UserRepository) AddUser(user model.User) (model.User, error) {
 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
 	err = r.searchEngine.IndexDocument(indexName, latestUser.ID.Hex(), newUser)
 	if err != nil {
-		// If indexing fails, you may choose to handle this error accordingly,
-		// like rolling back the user creation in the database.
-		// For simplicity, we're not handling the error here.
 		log.Println("Failed to index user in ElasticSearch:", err)
 	} else {
 		log.Println("User indexed successfully in ElasticSearch")
@@ -86,8 +83,6 @@ func (r *UserRepository) UpdateUser(user model.User) error {
 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
 	err = r.searchEngine.IndexDocument(indexName, updatedUser.ID.Hex(), updatedUser)
 	if err != nil {
-		// If indexing fails, you may choose to handle this error accordingly.
-		// For simplicity, we're not handling the error here.
 		log.Println("Failed to update user data in ElasticSearch:", err)
 	} else {
 		log.Println("User data updated successfully in ElasticSearch")
@@ -107,8 +102,6 @@ func (r *UserRepository) PatchUser(user model.User) (model.User, error) {
 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
 	err = r.searchEngine.IndexDocument(indexName, patchedUser.ID.Hex(), patchedUser)
 	if err != nil {
-		// If indexing fails, you may choose to handle this error accordingly.
-		// For simplicity, we're not handling the error here.
 		log.Println("Failed to update user data in ElasticSearch:", err)
 	} else {
 		log.Println("User data updated successfully in ElasticSearch")
@@ -135,8 +128,6 @@ func (r *UserRepository) DeleteUser(id string) error {
 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
 	err = r.searchEngine.DeleteDocument(indexName, id)
 	if err != nil {
-		// If removing from ElasticSearch fails, you may choose to handle this error accordingly.
-		// For simplicity, we're not handling the error here.
 		log.Println("Failed to remove user data from ElasticSearch:", err)
 	} else {
 		log.Println("User data removed successfully from ElasticSearch")
@@ -147,11 +138,6 @@ func (r *UserRepository) DeleteUser(id string) error {
 
 // SearchUsers performs a search query on the user data and returns the results.
 func (r *UserRepository) SearchUsers(query string) ([]search.SearchResult, error) {
-	// Here, you'll use the search engine to perform the search query
-	// and return the search results.
-	// The implementation will vary based on your specific requirements and how you've set up the search engine.
-	// In this example, we'll simply call the Search method of the search engine.
-
 	indexName := "users" // The name of the Elasticsearch index where user data is stored.
 	searchResults, err := r.searchEngine.Search(indexName, query)
 	if err != nil {

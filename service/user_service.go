@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"main.go/model"
 	"main.go/repository"
+	"main.go/search"
 )
 
 type UserService struct {
@@ -124,4 +125,14 @@ func (s *UserService) DeleteUser(id string) error {
 	}
 
 	return nil
+}
+
+func (s *UserService) SearchUser(query string) ([]search.SearchResult, error) {
+	// Directly call the repository method to search for users
+	results, err := s.userRepository.SearchUsers(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }

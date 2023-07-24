@@ -2,120 +2,155 @@ package service
 
 import (
 	"fmt"
-	"time"
+	"log"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"main.go/model"
 	"main.go/repository"
+	"main.go/search"
 )
 
 type PostService struct {
 	postRepository *repository.PostRepository
 	messaging      *MessagingService
-	cacheService   *CacheService
 }
 
-func NewPostService(postRepository *repository.PostRepository, messaging *MessagingService, cacheService *CacheService) *PostService {
+func NewPostService(postRepository *repository.PostRepository, messaging *MessagingService) *PostService {
 	return &PostService{
 		postRepository: postRepository,
 		messaging:      messaging,
-		cacheService:   cacheService,
 	}
 }
 
 func (s *PostService) GetPosts() ([]model.Post, error) {
-	cacheKey := "posts"
-	var posts []model.Post
-
-	// Try to get posts from the cache
-	err := s.cacheService.Get(cacheKey, &posts)
-	if err != nil {
-		// Cache miss, retrieve the posts from the repository
-		posts, err = s.postRepository.GetPosts()
-		if err != nil {
-			return nil, err
-		}
-
-		// Store the posts in the cache
-		err = s.cacheService.Set(cacheKey, posts, time.Hour)
-		if err != nil {
-			// Log the error, but don't affect the response
-			fmt.Printf("Failed to set posts in cache: %v\n", err)
-		}
-	}
-
-	return posts, nil
+	return s.postRepository.GetPosts()
 }
 
 func (s *PostService) GetPostByID(id string) (model.Post, error) {
-	cacheKey := fmt.Sprintf("post:%d", id)
-	var post model.Post
-
-	// Try to get the post from the cache
-	err := s.cacheService.Get(cacheKey, &post)
+	// Convert the string ID to a primitive.ObjectID
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		// Cache miss, retrieve the post from the repository
-		post, err = s.postRepository.GetPostByID(id)
-		if err != nil {
-			return model.Post{}, err
-		}
-
-		// Store the post in the cache
-		err = s.cacheService.Set(cacheKey, post, time.Hour)
-		if err != nil {
-			// Log the error, but don't affect the response
-			fmt.Printf("Failed to set post in cache: %v\n", err)
-		}
+		return model.Post{}, fmt.Errorf("invalid object ID format: %v", err)
 	}
 
-	return post, nil
+	// Directly call the repository method to get post by ID
+	return s.postRepository.GetPostByID(objID)
 }
 
 func (s *PostService) AddPost(post model.Post) (model.Post, error) {
-	// Clear the posts cache
-	err := s.cacheService.Delete("posts")
+	addedPost, err := s.postRepository.AddPost(post)
 	if err != nil {
-		// Log the error, but don't affect the response
-		fmt.Printf("Failed to delete posts cache: %v\n", err)
+		return model.Post{}, err
 	}
 
-	return s.postRepository.AddPost(post)
+	// Get the latest inserted post from the database
+	latestPost, err := s.postRepository.GetLatestInsertedPost()
+	if err != nil {
+		// Handle the error if necessary
+		log.Println("Failed to get the latest inserted post from the database:", err)
+		return latestPost, nil
+	}
+
+	// Convert the primitive.ObjectID to a string
+	postID := latestPost.ID.Hex()
+
+	// Publish a message indicating a new post has been added
+	err = s.messaging.Publish("post.added", []byte(postID))
+	if err != nil {
+		// Log the error if publishing fails
+		fmt.Printf("Failed to publish post.added message: %v\n", err)
+	} else {
+		// Log success if publishing is successful
+		fmt.Printf("Successfully published post.added message for post %s\n", postID)
+	}
+
+	return addedPost, nil
 }
 
-func (s *PostService) UpdatePost(id int, post model.Post) (model.Post, error) {
-	cacheKey := fmt.Sprintf("post:%d", id)
-
-	// Clear the post cache
-	err := s.cacheService.Delete(cacheKey)
+func (s *PostService) UpdatePost(id string, post model.Post) error {
+	// Convert the string ID to a primitive.ObjectID
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		// Log the error, but don't affect the response
-		fmt.Printf("Failed to delete post cache: %v\n", err)
+		return fmt.Errorf("invalid object ID format: %v", err)
 	}
 
-	return s.postRepository.UpdatePost(post)
+	// Update the post in the repository
+	err = s.postRepository.UpdatePost(post)
+	if err != nil {
+		return err
+	}
+
+	// Publish a message indicating a post has been updated
+	err = s.messaging.Publish("post.updated", []byte(objID.Hex()))
+	if err != nil {
+		// Log the error if publishing fails
+		fmt.Printf("Failed to publish post.updated message: %v\n", err)
+	} else {
+		// Log success if publishing is successful
+		fmt.Printf("Successfully published post.updated message for post %s\n", objID.Hex())
+	}
+
+	return nil
 }
 
-func (s *PostService) PatchPost(id int, post model.Post) (model.Post, error) {
-	cacheKey := fmt.Sprintf("post:%d", id)
-
-	// Clear the post cache
-	err := s.cacheService.Delete(cacheKey)
+func (s *PostService) PatchPost(id string, post model.Post) (model.Post, error) {
+	// Convert the string ID to a primitive.ObjectID
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		// Log the error, but don't affect the response
-		fmt.Printf("Failed to delete post cache: %v\n", err)
+		return model.Post{}, fmt.Errorf("invalid object ID format: %v", err)
 	}
 
-	return s.postRepository.PatchPost(post)
+	// Patch the post in the repository
+	patchedPost, err := s.postRepository.PatchPost(post)
+	if err != nil {
+		return model.Post{}, err
+	}
+
+	// Publish a message indicating a post has been updated
+	err = s.messaging.Publish("post.updated", []byte(objID.Hex()))
+	if err != nil {
+		// Log the error if publishing fails
+		fmt.Printf("Failed to publish post.updated message: %v\n", err)
+	} else {
+		// Log success if publishing is successful
+		fmt.Printf("Successfully published post.updated message for post %s\n", objID.Hex())
+	}
+
+	return patchedPost, nil
 }
 
 func (s *PostService) DeletePost(id string) error {
-	cacheKey := fmt.Sprintf("post:%d", id)
-
-	// Clear the post cache
-	err := s.cacheService.Delete(cacheKey)
+	// Convert the string ID to a primitive.ObjectID
+	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		// Log the error, but don't affect the response
-		fmt.Printf("Failed to delete post cache: %v\n", err)
+		return fmt.Errorf("invalid object ID format: %v", err)
 	}
 
-	return s.postRepository.DeletePost(id)
+	// Directly call the repository method to delete post
+	err = s.postRepository.DeletePost(objID)
+	if err != nil {
+		return err
+	}
+
+	// Publish a message indicating a post has been deleted
+	err = s.messaging.Publish("post.deleted", []byte(objID.Hex()))
+	if err != nil {
+		// Log the error if publishing fails
+		fmt.Printf("Failed to publish post.deleted message: %v\n", err)
+	} else {
+		// Log success if publishing is successful
+		fmt.Printf("Successfully published post.deleted message for post %s\n", objID.Hex())
+	}
+
+	return nil
+}
+
+func (s *PostService) SearchPost(query string) ([]search.SearchResult, error) {
+	// Directly call the repository method to search for posts
+	results, err := s.postRepository.SearchPosts(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }

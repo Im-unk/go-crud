@@ -2,8 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 	"main.go/model"
@@ -56,6 +56,8 @@ func (h *PostHandler) AddPost(w http.ResponseWriter, req *http.Request) {
 // GetPost handles the GET /posts/{id} endpoint
 func (h *PostHandler) GetPost(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
+	fmt.Println("handler: Fetching post with ID:", idParam)
+
 	post, err := h.postService.GetPostByID(idParam)
 	if err != nil {
 		http.Error(w, "No data found with specified ID", http.StatusNotFound)
@@ -68,46 +70,35 @@ func (h *PostHandler) GetPost(w http.ResponseWriter, req *http.Request) {
 // UpdatePost handles the PUT /posts/{id} endpoint
 func (h *PostHandler) UpdatePost(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID could not be converted to integer", http.StatusBadRequest)
-		return
-	}
 
 	var updatedPost model.Post
-	err = json.NewDecoder(req.Body).Decode(&updatedPost)
+	err := json.NewDecoder(req.Body).Decode(&updatedPost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	//updatedPost.ID = id
-	post, err := h.postService.UpdatePost(id, updatedPost) // Pass the ID as a separate parameter
+	err = h.postService.UpdatePost(idParam, updatedPost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeResponse(w, post)
+
+	writeResponse(w, updatedPost)
 }
 
 // PatchPost handles the PATCH /posts/{id} endpoint
 func (h *PostHandler) PatchPost(w http.ResponseWriter, req *http.Request) {
 	idParam := mux.Vars(req)["id"]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID could not be converted to integer", http.StatusBadRequest)
-		return
-	}
 
 	var patchedPost model.Post
-	err = json.NewDecoder(req.Body).Decode(&patchedPost)
+	err := json.NewDecoder(req.Body).Decode(&patchedPost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	//patchedPost.ID = id
-	post, err := h.postService.PatchPost(id, patchedPost) // Pass the ID as a separate parameter
+	post, err := h.postService.PatchPost(idParam, patchedPost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -127,4 +118,18 @@ func (h *PostHandler) DeletePost(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// SearchPost handles the GET /search/posts/{query} endpoint
+func (h *PostHandler) SearchPost(w http.ResponseWriter, req *http.Request) {
+	queryParam := mux.Vars(req)["query"]
+
+	results, err := h.postService.SearchPost(queryParam)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Send it as JSON in the response
+	json.NewEncoder(w).Encode(results)
 }

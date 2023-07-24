@@ -49,7 +49,7 @@ func main() {
 	cacheDatabse := database.NewCacheDatabase(redisCache) // Pass the Redis cache instance
 
 	// Create the PostRepository using the MongoDB database instance
-	postRepository := repository.NewPostRepository(mongodb.NewPostMongoDB(mongoDB))
+	postRepository := repository.NewPostRepository(mongodb.NewPostMongoDB(mongoDB, cacheDatabse), esEngine)
 
 	// Create the UserRepository using the MongoDB database instance
 	userRepository := repository.NewUserRepository(mongodb.NewUserMongoDB(mongoDB, cacheDatabse), esEngine)
@@ -64,12 +64,9 @@ func main() {
 	// Create the MessagingService
 	messagingService := service.NewMessagingService(natsMessaging)
 
-	// Create the CacheService
-	cacheService := service.NewCacheService(redisCache) // Pass the Redis cache instance
-
 	// Create the services
-	postService := service.NewPostService(postRepository, messagingService, cacheService) // Pass the messagingService
-	userService := service.NewUserService(userRepository, messagingService)               // Pass the messagingService
+	postService := service.NewPostService(postRepository, messagingService) // Pass the messagingService
+	userService := service.NewUserService(userRepository, messagingService) // Pass the messagingService
 
 	// Create the API router
 	router := api.NewRouter(postService, userService, messagingService) // Pass the messagingService
